@@ -1,0 +1,176 @@
+# Just for reference
+from sklearn.datasets import fetch_lfw_people
+
+lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.6)
+
+[lfw_people.target_names[i] for i in range(6)]
+
+sns.set_style('dark')
+plt.imshow(lfw_people.images[1], cmap=plt.cm.gray, vmin=0, vmax=1)
+plt.title(lfw_people.target_names[lfw_people.target[1]], size=12);
+
+# sample of 3x3 set of pixels
+plt.imshow(lfw_people.images[1][20:23,20:23],cmap=plt.cm.gray,vmin=0, vmax=1);
+
+lfw_people.images[1][20:23,20:23].round(2)
+
+lfw_people.images[1].shape
+
+x = lfw_people.images[1].reshape(1,-1)
+x
+
+x.shape
+
+# get the shape of images for plotting the
+n_samples, h, w = lfw_people.images.shape
+
+# use actual pixel values, ignoring relative position
+X_faces = lfw_people.data
+n_features = X_faces.shape[1]
+
+# the label to predict is the id of the person
+y_faces = lfw_people.target
+target_names = lfw_people.target_names
+n_classes = target_names.shape[0]
+
+# create train/test split
+X_train_faces, X_test_faces, y_train_faces, y_test_faces = train_test_split(X_faces, y_faces,
+                                                                            test_size=0.25,
+                                                                            stratify=y_faces,
+                                                                            random_state=0)
+print(f"image_size: {h}x{w}")
+print("n_features: %d" % n_features)
+print("n_classes : %d" % n_classes)
+print(f"n_train   : {len(X_train_faces)}")
+print(f"n_test    : {len(X_test_faces)}")
+
+# Variance explained by PCA
+
+pca_faces = PCA().fit(X_train_faces)
+
+df_var_faces = pd.DataFrame({'component':range(pca_faces.n_components_),
+                             'cumulative explained variance':pca_faces.explained_variance_ratio_.cumsum()})
+# using lineplot here instead of pointplot because of the large number of components
+with sns.axes_style('darkgrid'):
+    sns.lineplot(x='component',y='cumulative explained variance',data=df_var_faces);
+
+# Compute PCA and Transform
+# set the number of dimensions we want to retain
+n_components = 200
+
+# instantiate and fit on X_train
+pca_faces = PCA(n_components=n_components,
+                svd_solver='randomized',
+                whiten=True).fit(X_train_faces)
+
+# extract and reshape components into eigenfaces for plotting
+eigenfaces = pca_faces.components_.reshape((n_components, h, w))
+
+# transform the training and test set for classification
+X_train_faces_pca = pca_faces.transform(X_train_faces)
+X_test_faces_pca = pca_faces.transform(X_test_faces)
+
+pca_faces.components_[0].round(2)
+
+# Eigenfaces
+
+# What if we plot the top 12 components (eigenfaces) using .reshape(h,w)?
+
+def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
+    """Helper function to plot a gallery of portraits"""
+    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+    plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+    for i in range(n_row * n_col):
+        plt.subplot(n_row, n_col, i + 1)
+        plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)
+        plt.title(titles[i], size=12)
+        plt.xticks(())
+        plt.yticks(())
+    plt.tight_layout()
+
+# plot the result of the prediction on a portion of the test set
+def title(y_pred, y_test, target_names, i):
+    pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
+    true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
+    return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
+
+# Eigenfaces
+
+#- What if we plot the top 12 components (eigenfaces) using .reshape(h,w)?
+
+eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
+plot_gallery(eigenfaces, eigenface_titles, h, w)
+
+# Train and Tune SVC
+
+%%time
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVC
+
+params = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
+          'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
+clf_faces_pca = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'),
+                             params, cv=3, n_jobs=-1)
+clf_faces_pca = clf_faces_pca.fit(X_train_faces_pca, y_train_faces)
+
+print(f"best_params : {clf_faces_pca.best_params_}")
+print(f"best_score  : {clf_faces_pca.best_score_:0.2f}")
+
+# Evaluate on the test set
+
+from sklearn.metrics import classification_report
+
+y_pred_pca = clf_faces_pca.predict(X_test_faces_pca)
+print(classification_report(y_test_faces, y_pred_pca, target_names=target_names))
+
+# Prediction Examples
+prediction_titles = [title(y_pred_pca, y_test_faces, target_names, i)
+                     for i in range(y_pred_pca.shape[0])]
+
+plot_gallery(X_test_faces[10:], prediction_titles[10:], h, w)
+plt.tight_layout()
+
+# Performance without PCA: Train
+%%time
+
+# Warning: this cell takes up to 3 minutes to execute on an Intel i7 1.8Ghz w/ 8 cores
+
+params = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
+          'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],}
+clf_faces_nopca = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'),
+                                   params, cv=3, n_jobs=-1)
+clf_faces_nopca = clf_faces_nopca.fit(X_train_faces, y_train_faces)
+
+#CPU times: user 2.08 s, sys: 53.3 ms, total: 2.13 s
+#Wall time: 2min 42s
+
+print(f"best_params : {clf_faces_nopca.best_params_}")
+print(f"best_score  : {clf_faces_nopca.best_score_:0.2f}")
+
+#best_params : {'C': 1000.0, 'gamma': 0.0001}
+#best_score  : 0.78
+
+%%time
+
+# Past performance (pre fall 2022)
+
+# Warning: this cell takes up to 2 minutes to execute on an Intel i7 1.8Ghz w/ 8 cores
+
+params = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
+          'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],}
+clf_faces = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'),
+                         params, cv=3, n_jobs=-1)
+clf_faces = clf_faces.fit(X_train_faces, y_train_faces)
+
+# CPU times: user 9.57 s, sys: 72.1 ms, total: 9.64 s
+# Wall time: 1min 18s
+
+print(f"best_params : {clf_faces.best_params_}")
+print(f"best_score  : {clf_faces.best_score_:0.2f}")
+
+# best_params : {'C': 1000.0, 'gamma': 0.0001}
+# best_score  : 0.41
+
+# Performance without PCA: Evaluate
+y_pred_nopca = clf_faces_nopca.predict(X_test_faces)
+print(classification_report(y_test_faces, y_pred_nopca, target_names=target_names))
