@@ -9,11 +9,11 @@ class SVC_Image:
             ('svc', SVC(kernel=kernel, C=C, gamma=gamma))
         ])
 
-    def fit(self, X, y):
+    def train(self, X, y):
         self.model.fit(X, y)
     
     def predict(self, X):
         return self.model.predict(X)
 
-    def score(self, X, y):
-        return self.model.score(X, y)
+    #def score(self, X, y):
+     #   return self.model.score(X, y)
