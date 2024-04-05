@@ -7,6 +7,8 @@ from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 import argparse
+
+from models import Resnet
 # Data Exploration
 # 1. The distribution of data instances (Train set / Test set)
 # 2. The shape of each data instance (-> Shape after converting to numpy)
@@ -19,7 +21,7 @@ import argparse
 # Insights from Data Exploration
 # Test comment
 LABEL_MAP = {"fear":0, "disgust":1, "happy":2, "sad":3, "neutral":4, "angry":5, "surprise": 6}
-EXPLORE = 1
+EXPLORE = 0
 DIM = 48
 
 def convert_dataset(data_dir=None, split='train'):
@@ -83,15 +85,17 @@ def main(args):
         smote=SMOTE(random_state=42)
         train_dataset_smote, train_labels_smote = smote.fit_resample(train_dataset, train_labels)
         train_dataset_smote = train_dataset_smote.reshape(train_dataset_smote.shape[0], DIM, DIM)
-
-    if EXPLORE:
-        data_exploration("Oversampler", train_labels_os)
-        data_exploration("Undersampler", train_labels_us)
-        data_exploration("Smote", train_labels_smote)
-    
+    if args.model == "Resnet":
+        # Test Code for Resnet
+        resnet = Resnet()
+        resnet.train(train_dataset_smote, train_labels_smote, val_dataset, val_labels)
+        predictions = resnet.predict(test_dataset)
+        print(f"LEN PREDICTIONS : {len(predictions)}")
+        print(predictions[:10])
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
+    parser.add_argument('--model', type=str, default="Resnet")
     
     args = parser.parse_args()
     main(args)
