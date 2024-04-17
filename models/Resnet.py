@@ -10,7 +10,7 @@ from torcheval.metrics.functional import multiclass_f1_score
 from tqdm import tqdm
 
 class Resnet:
-    def __init__(self, device='cuda'):
+    def __init__(self, device='cuda'): # replace cuda with cpu if on Mac
         self.device = device
         self.model = models.resnet18(weights='IMAGENET1K_V1')
         self.model = self.model.cuda()

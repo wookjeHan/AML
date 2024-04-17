@@ -1,2 +1,2 @@
-from .SVC_classifier import SVC_Image
+from .SVC_classifier import SVC_classifier
 from .Resnet import Resnet
