@@ -9,6 +9,7 @@ from imblearn.under_sampling import RandomUnderSampler
 import argparse
 
 from models import Resnet
+from models import SVC_classifier
 # Data Exploration
 # 1. The distribution of data instances (Train set / Test set)
 # 2. The shape of each data instance (-> Shape after converting to numpy)
@@ -86,17 +87,33 @@ def main(args):
         train_dataset_smote, train_labels_smote = smote.fit_resample(train_dataset, train_labels)
         train_dataset_smote = train_dataset_smote.reshape(train_dataset_smote.shape[0], DIM, DIM)
     if args.model == "Resnet":
-        # Test Code for Resnet
+        #Test Code for Resnet
         resnet = Resnet()
         resnet.train(train_dataset_smote, train_labels_smote, val_dataset, val_labels)
         predictions = resnet.predict(test_dataset)
         print(f"LEN PREDICTIONS : {len(predictions)}")
         print(predictions[:10])
+    if args.model == "SVC_classifier":
+        # Test Code for SVC
+        svc = SVC_classifier()
+        train_x_reshaped = train_dataset_smote.reshape(train_dataset_smote.shape[0], -1)
+        val_x_reshaped = val_dataset.reshape(val_dataset.shape[0], -1)
+        test_x_reshaped = test_dataset.reshape(test_dataset.shape[0],-1)
+        print(f"train dataset smote shape: {train_dataset_smote.shape}")
+        print(f"valid dataset smote shape: {val_dataset.shape}")
+        print(f"reshaped train dataset smote shape: {train_x_reshaped.shape}")
+        print(f"reshaped val dataset smote shape: {val_x_reshaped.shape}")
+        print(f"train labels smote shape: {train_labels_smote.shape}")
+
+        svc.train(train_x_reshaped[:5000], train_labels_smote[:5000], val_x_reshaped[:500], val_labels[:500])
+        predictions = svc.predict(test_x_reshaped)
+        print(f"LEN PREDICTIONS : {len(predictions)}")
+        print(predictions[:100])
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    parser.add_argument('--model', type=str, default="Resnet")
-    
+    #parser.add_argument('--model', type=str, default="Resnet")
+    parser.add_argument('--model', type=str, default="SVC_classifier")
     args = parser.parse_args()
     main(args)
 
