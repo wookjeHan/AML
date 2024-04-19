@@ -98,21 +98,25 @@ def main(args):
     if args.model == "SVC_classifier":
         # Test Code for SVC
         svc = SVC_classifier()
-        train_x_reshaped = train_dataset_smote.reshape(train_dataset_smote.shape[0], -1)
+        train_x_smote = train_dataset_smote.reshape(train_dataset_smote.shape[0], -1)
+        train_x_us = train_dataset_smote.reshape(train_dataset_us.shape[0], -1)
+        train_x_os = train_dataset_smote.reshape(train_dataset_os.shape[0], -1)
         val_x_reshaped = val_dataset.reshape(val_dataset.shape[0], -1)
         test_x_reshaped = test_dataset.reshape(test_dataset.shape[0],-1)
         print(f"train dataset smote shape: {train_dataset_smote.shape}")
-        print(f"valid dataset smote shape: {val_dataset.shape}")
-        print(f"reshaped train dataset smote shape: {train_x_reshaped.shape}")
-        print(f"reshaped val dataset smote shape: {val_x_reshaped.shape}")
+        print(f"valid dataset shape: {val_dataset.shape}")
+        print(f"reshaped train dataset smote shape: {train_x_smote.shape}")
+        print(f"reshaped train dataset undersampling shape: {train_x_us.shape}")
+        print(f"reshaped train dataset oversampling shape: {train_x_os.shape}")
+        print(f"reshaped val dataset shape: {val_x_reshaped.shape}")
         print(f"train labels smote shape: {train_labels_smote.shape}")
 
-        svc.train(train_x_reshaped[:20000], train_labels_smote[:20000], val_x_reshaped[:5000], val_labels[:5000]) # this will take a few hours
+        svc.train(train_x_us, train_labels_os, val_x_reshaped, val_labels) # this will take a few hours
+        #svc.train(train_x_smote[:20000], train_labels_smote[:20000], val_x_reshaped, val_labels) # this will take a few hours
+        #svc.train(train_x_os[:20000], train_labels_os[:20000], val_x_reshaped, val_labels) # this will take a few hours
         predictions = svc.predict(test_x_reshaped)
         test_accuracy = np.mean(predictions == test_labels)
         print(f"Test Accuracy: {test_accuracy}")
-        #print(f"LEN PREDICTIONS : {len(predictions)}")
-        #print(predictions[:10])
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
