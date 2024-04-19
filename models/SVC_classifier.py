@@ -4,9 +4,9 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import GridSearchCV
 
 class SVC_classifier:
-    def __init__(self, kernel='rbf', C=1.0, gamma='scale'):
+    def __init__(self, kernel='rbf', C=1.0, gamma='scale', shrinking=True):
         self.model = Pipeline([
-            ('svc', SVC(kernel=kernel, C=C, gamma=gamma,verbose=True))
+            ('svc', SVC(kernel=kernel, C=C, gamma=gamma,shrinking=shrinking,verbose=True))
         ])
 
     def train(self, train_x, train_y, val_x, val_y):

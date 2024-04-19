@@ -93,6 +93,8 @@ def main(args):
         predictions = resnet.predict(test_dataset)
         print(f"LEN PREDICTIONS : {len(predictions)}")
         print(predictions[:10])
+        test_accuracy = np.mean(predictions == test_labels)
+        print(f"Test Accuracy: {test_accuracy}")
     if args.model == "SVC_classifier":
         # Test Code for SVC
         svc = SVC_classifier()
@@ -105,15 +107,17 @@ def main(args):
         print(f"reshaped val dataset smote shape: {val_x_reshaped.shape}")
         print(f"train labels smote shape: {train_labels_smote.shape}")
 
-        svc.train(train_x_reshaped[:5000], train_labels_smote[:5000], val_x_reshaped[:500], val_labels[:500])
+        svc.train(train_x_reshaped[:20000], train_labels_smote[:20000], val_x_reshaped[:5000], val_labels[:5000]) # this will take a few hours
         predictions = svc.predict(test_x_reshaped)
-        print(f"LEN PREDICTIONS : {len(predictions)}")
-        print(predictions[:100])
+        test_accuracy = np.mean(predictions == test_labels)
+        print(f"Test Accuracy: {test_accuracy}")
+        #print(f"LEN PREDICTIONS : {len(predictions)}")
+        #print(predictions[:10])
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    #parser.add_argument('--model', type=str, default="Resnet")
-    parser.add_argument('--model', type=str, default="SVC_classifier")
+    parser.add_argument('--model', type=str, default="Resnet")
+    #parser.add_argument('--model', type=str, default="SVC_classifier")
     args = parser.parse_args()
     main(args)
 
