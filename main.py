@@ -117,6 +117,27 @@ def main(args):
         predictions = svc.predict(test_x_reshaped)
         test_accuracy = np.mean(predictions == test_labels)
         print(f"Test Accuracy: {test_accuracy}")
+    if args.model == "KNN":
+        #Test Code for KNN
+        # Assuming there is a 'k' parameter for the number of neighbors
+        knn = KNN(k=args.k)  
+        # Preparing the data by reshaping the datasets as needed for the KNN model
+        train_x_reshaped = train_dataset.reshape(train_dataset.shape[0], -1)
+        val_x_reshaped = val_dataset.reshape(val_dataset.shape[0], -1)
+        test_x_reshaped = test_dataset.reshape(test_dataset.shape[0], -1)
+
+        # Training the KNN model on the reshaped train dataset
+        knn.train(train_x_reshaped, train_labels)
+
+        # Using the trained KNN model to predict the labels of the test dataset
+        predictions = knn.predict(test_x_reshaped)
+ 
+        # Calculating the accuracy of the predictions
+        test_accuracy = np.mean(predictions == test_labels)
+        print(f"Reshaped train dataset shape for KNN: {train_x_reshaped.shape}")
+        print(f"Test Accuracy for KNN: {test_accuracy:.2f}")
+        
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
