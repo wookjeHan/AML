@@ -8,8 +8,8 @@ from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 import argparse
 
-from models import Resnet
-from models import SVC_classifier
+#from models import Resnet
+# from models import SVC_classifier
 from models import DecisionTree_classifier
 
 # Data Exploration
@@ -165,8 +165,9 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    parser.add_argument('--model', type=str, default="Resnet")
+    #parser.add_argument('--model', type=str, default="Resnet")
     #parser.add_argument('--model', type=str, default="SVC_classifier")
+    parser.add_argument('--model', type=str, default="DecisionTree_classifier")
     args = parser.parse_args()
     main(args)
 
