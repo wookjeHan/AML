@@ -4,9 +4,11 @@ import os
 from PIL import Image
 import numpy as np
 from sklearn.model_selection import train_test_split
+import torch
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.metrics import f1_score
+from torcheval.metrics.functional import multiclass_f1_score
 import argparse
 
 from models import Resnet
@@ -88,15 +90,22 @@ def main(args):
         smote=SMOTE(random_state=42)
         train_dataset_smote, train_labels_smote = smote.fit_resample(train_dataset, train_labels)
         train_dataset_smote = train_dataset_smote.reshape(train_dataset_smote.shape[0], DIM, DIM)
+    
+    train_dataset = train_dataset.reshape(train_dataset.shape[0], DIM, DIM)
+    
     if args.model == "Resnet":
         #Test Code for Resnet
         resnet = Resnet()
-        resnet.train(train_dataset_smote, train_labels_smote, val_dataset, val_labels)
+        resnet.train(train_dataset, train_labels, val_dataset, val_labels)
         predictions = resnet.predict(test_dataset)
         print(f"LEN PREDICTIONS : {len(predictions)}")
         print(predictions[:10])
         test_accuracy = np.mean(predictions == test_labels)
-        print(f"Test Accuracy: {test_accuracy}")
+        print("ACC : ", test_accuracy)
+        print(np.array(test_labels).size, np.array(predictions).size)
+        f1_score = multiclass_f1_score(torch.tensor(test_labels), torch.tensor(predictions), num_classes=7, average="weighted")
+        print(f"Test Accuracy: {test_accuracy}, f1_score: {f1_score}")
+        
     if args.model == "SVC_classifier":
         svc = SVC_classifier()
 
@@ -117,6 +126,7 @@ def main(args):
         f1 = f1_score(test_labels, predictions, average='weighted')  # Use 'micro', 'macro', or 'weighted' as per your requirement
         print(f"Test Accuracy: {test_accuracy}")
         print(f"Weighted F1 Score: {f1}")
+        
     if args.model == "KNN":
         #Test Code for KNN
         # Assuming there is a 'k' parameter for the number of neighbors
