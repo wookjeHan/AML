@@ -6,10 +6,12 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
+from sklearn.metrics import f1_score
 import argparse
 
 from models import Resnet
 from models import SVC_classifier
+from models import KNN_classifier
 # Data Exploration
 # 1. The distribution of data instances (Train set / Test set)
 # 2. The shape of each data instance (-> Shape after converting to numpy)
@@ -96,31 +98,29 @@ def main(args):
         test_accuracy = np.mean(predictions == test_labels)
         print(f"Test Accuracy: {test_accuracy}")
     if args.model == "SVC_classifier":
-        # Test Code for SVC
         svc = SVC_classifier()
+
+        # must reshape sampling methods for SVC to work
         train_x_smote = train_dataset_smote.reshape(train_dataset_smote.shape[0], -1)
-        train_x_us = train_dataset_smote.reshape(train_dataset_us.shape[0], -1)
-        train_x_os = train_dataset_smote.reshape(train_dataset_os.shape[0], -1)
+        train_x_us = train_dataset_us.reshape(train_dataset_us.shape[0], -1)
+        train_x_os = train_dataset_os.reshape(train_dataset_os.shape[0], -1)
         val_x_reshaped = val_dataset.reshape(val_dataset.shape[0], -1)
         test_x_reshaped = test_dataset.reshape(test_dataset.shape[0],-1)
-        print(f"train dataset smote shape: {train_dataset_smote.shape}")
-        print(f"valid dataset shape: {val_dataset.shape}")
-        print(f"reshaped train dataset smote shape: {train_x_smote.shape}")
-        print(f"reshaped train dataset undersampling shape: {train_x_us.shape}")
-        print(f"reshaped train dataset oversampling shape: {train_x_os.shape}")
-        print(f"reshaped val dataset shape: {val_x_reshaped.shape}")
-        print(f"train labels smote shape: {train_labels_smote.shape}")
 
-        svc.train(train_x_us, train_labels_os, val_x_reshaped, val_labels) # this will take a few hours
-        #svc.train(train_x_smote[:20000], train_labels_smote[:20000], val_x_reshaped, val_labels) # this will take a few hours
-        #svc.train(train_x_os[:20000], train_labels_os[:20000], val_x_reshaped, val_labels) # this will take a few hours
+        # choose original df or a sampling method to train on
+        svc.train(train_dataset,train_labels,val_x_reshaped,val_labels)
+        #svc.train(train_x_us, train_labels_us, val_x_reshaped, val_labels) 
+        #svc.train(train_x_smote, train_labels_smote, val_x_reshaped, val_labels) # this will take a few hours
+        #svc.train(train_x_os, train_labels_os, val_x_reshaped, val_labels) # this will take a few hours
         predictions = svc.predict(test_x_reshaped)
         test_accuracy = np.mean(predictions == test_labels)
+        f1 = f1_score(test_labels, predictions, average='weighted')  # Use 'micro', 'macro', or 'weighted' as per your requirement
         print(f"Test Accuracy: {test_accuracy}")
+        print(f"Weighted F1 Score: {f1}")
     if args.model == "KNN":
         #Test Code for KNN
         # Assuming there is a 'k' parameter for the number of neighbors
-        knn = KNN(k=args.k)  
+        knn = KNN_classifier(k=args.k)  
         # Preparing the data by reshaping the datasets as needed for the KNN model
         train_x_reshaped = train_dataset.reshape(train_dataset.shape[0], -1)
         val_x_reshaped = val_dataset.reshape(val_dataset.shape[0], -1)
@@ -141,7 +141,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    parser.add_argument('--model', type=str, default="Resnet")
+    #parser.add_argument('--model', type=str, default="Resnet")
     #parser.add_argument('--model', type=str, default="SVC_classifier")
     args = parser.parse_args()
     main(args)
