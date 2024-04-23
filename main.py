@@ -11,7 +11,7 @@ from sklearn.metrics import f1_score
 from torcheval.metrics.functional import multiclass_f1_score
 import argparse
 
-from models import Resnet
+from models import Resnet, VGG
 from models import SVC_classifier
 from models import KNN_classifier
 # Data Exploration
@@ -147,11 +147,27 @@ def main(args):
         print(f"Reshaped train dataset shape for KNN: {train_x_reshaped.shape}")
         print(f"Test Accuracy for KNN: {test_accuracy:.2f}")
         
+    # Test code for VGG-16
+    if args.model == "VGG":
+        vgg = VGG()
+        sampling_methods = {
+            'original': (train_dataset, train_labels),
+            'OverSampling': (train_dataset_os, train_labels_os),
+            'UnderSampling': (train_dataset_us, train_labels_us),
+            'SMOTE' : (train_dataset_smote, train_labels_smote)
+        }
+        for method, (data, labels) in sampling_methods.items():
+            print(f"Training VGG model with {method} enhanced data...")
+            vgg.train(data, labels, val_dataset, val_labels)
+            print("Predicting with VGG model...")
+            predictions = vgg.predict(test_dataset)
+            test_accuracy = np.mean(predictions == test_labels)
+            print(f"Test Accuracy for VGG: {test_accuracy:.2f}")
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    #parser.add_argument('--model', type=str, default="Resnet")
+    parser.add_argument('--model', type=str, default='Resnet', choices=['VGG',])    
     #parser.add_argument('--model', type=str, default="SVC_classifier")
     args = parser.parse_args()
     main(args)
