@@ -162,12 +162,13 @@ def main(args):
             print("Predicting with VGG model...")
             predictions = vgg.predict(test_dataset)
             test_accuracy = np.mean(predictions == test_labels)
-            print(f"Test Accuracy for VGG: {test_accuracy:.2f}")
-    
+            f1_score = multiclass_f1_score(torch.tensor(test_labels), torch.tensor(predictions), num_classes=7, average="weighted")
+            print(f"Test Accuracy for VGG: {test_accuracy:.2f}, F1: {f1_score}")
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    parser.add_argument('--model', type=str, default='Resnet', choices=['VGG',])    
+    parser.add_argument('--model', type=str, default='VGG', choices=['VGG',])    
     #parser.add_argument('--model', type=str, default="SVC_classifier")
     args = parser.parse_args()
     main(args)

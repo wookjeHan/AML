@@ -31,7 +31,7 @@ class VGG:
         loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         return loader
 
-    def train(self, train_x, train_y, val_x, val_y, optimizer='adam', batch_size=32, epochs=20, lr=0.0005, eval_freq=4):
+    def train(self, train_x, train_y, val_x, val_y, optimizer='adam', batch_size=32, epochs=5, lr=0.0005, eval_freq=4):
         train_loader = self._create_dataloader(train_x, train_y, batch_size)
         val_loader = self._create_dataloader(val_x, val_y, batch_size)
         criterion = nn.CrossEntropyLoss()
