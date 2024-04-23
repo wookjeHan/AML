@@ -31,7 +31,7 @@ class VGG:
         loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         return loader
 
-    def train(self, train_x, train_y, val_x, val_y, optimizer='adam', batch_size=32, epochs=5, lr=0.0005, eval_freq=4):
+    def train(self, train_x, train_y, val_x, val_y, optimizer='adam', batch_size=32, epochs=5, lr=0.0005,):
         train_loader = self._create_dataloader(train_x, train_y, batch_size)
         val_loader = self._create_dataloader(val_x, val_y, batch_size)
         criterion = nn.CrossEntropyLoss()
@@ -52,14 +52,16 @@ class VGG:
                 optimizer.step()
                 train_loss += loss.item()
 
-            if epoch % eval_freq == 0 or epoch == 1:
-                val_f1 = self.evaluate(val_loader)
-                print(f"EPOCH: {epoch}, Train Loss: {train_loss / len(train_loader)}, Val F1: {val_f1}")
-                if val_f1 > best_perf:
-                    best_perf = val_f1
-                    best_model = self.model.state_dict()
+            # Evaluating after each epoch
 
-        self.model.load_state_dict(best_model)
+            val_f1 = self.evaluate(val_loader)
+            print(f"EPOCH: {epoch}, Train Loss: {train_loss / len(train_loader):.4f}, Val F1: {val_f1:.4f}")
+            if val_f1 > best_perf:
+                best_perf = val_f1
+                best_model = self.model.state_dict()
+
+        if best_model is not None:
+            self.model.load_state_dict(best_model)
 
     def evaluate(self, val_loader):
         self.model.eval()
@@ -69,8 +71,8 @@ class VGG:
                 inputs = inputs.to(self.device)
                 outputs = self.model(inputs)
                 predicted = torch.argmax(outputs, 1)
-                predictions.extend(predicted.numpy())
-                gts.extend(labels.numpy())
+                predictions.extend(predicted.cpu().numpy())
+                gts.extend(labels.cpu().numpy())
 
         predictions = torch.tensor(predictions)
         gts = torch.tensor(gts)
@@ -84,5 +86,5 @@ class VGG:
         with torch.no_grad():
             outputs = self.model(X_tensor)
             predicted = torch.argmax(outputs, 1)
-            predictions.extend(predicted.numpy())
+            predictions.extend(predicted.cpu().numpy())
         return predictions
