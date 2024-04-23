@@ -3,6 +3,7 @@
 import os
 from PIL import Image
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import torch
 from imblearn.over_sampling import SMOTE, RandomOverSampler
@@ -127,26 +128,42 @@ def main(args):
         print(f"Test Accuracy: {test_accuracy}")
         print(f"Weighted F1 Score: {f1}")
         
-    if args.model == "KNN":
-        #Test Code for KNN
-        # Assuming there is a 'k' parameter for the number of neighbors
-        knn = KNN_classifier(k=args.k)  
-        # Preparing the data by reshaping the datasets as needed for the KNN model
-        train_x_reshaped = train_dataset.reshape(train_dataset.shape[0], -1)
-        val_x_reshaped = val_dataset.reshape(val_dataset.shape[0], -1)
-        test_x_reshaped = test_dataset.reshape(test_dataset.shape[0], -1)
+  if args.model == "KNN":
+       # Create a dictionary to hold the different sampling datasets
+       sampling_methods = {
+          'original': (train_dataset, train_labels),
+          'OverSampling': (train_dataset_os, train_labels_os),
+          'UnderSampling': (train_dataset_us, train_labels_us),
+          'SMOTE': (train_dataset_smote, train_labels_smote)
+        }
 
-        # Training the KNN model on the reshaped train dataset
-        knn.train(train_x_reshaped, train_labels)
+       # Create a StandardScaler instance for data normalization
+       scaler = StandardScaler()
 
-        # Using the trained KNN model to predict the labels of the test dataset
-        predictions = knn.predict(test_x_reshaped)
- 
-        # Calculating the accuracy of the predictions
-        test_accuracy = np.mean(predictions == test_labels)
-        print(f"Reshaped train dataset shape for KNN: {train_x_reshaped.shape}")
-        print(f"Test Accuracy for KNN: {test_accuracy:.2f}")
-        
+       # Loop over each sampling method
+       for method, (data, labels) in sampling_methods.items():
+          print(f"Training KNN model with {method} enhanced data...")
+          # Reshape and scale the data
+          data_reshaped = data.reshape(data.shape[0], -1)
+          data_scaled = scaler.fit_transform(data_reshaped)
+
+          # Initialize the KNN model
+          knn = KNN_classifier(n_neighbors=args.k)
+         
+          # Train the KNN model
+          knn.train(data_scaled, labels)
+
+          # Prepare the test data and make predictions
+          test_data_reshaped = test_dataset.reshape(test_dataset.shape[0], -1)
+          test_data_scaled = scaler.transform(test_data_reshaped)
+          print("Predicting with KNN model...")
+          predictions = knn.predict(test_data_scaled)
+
+          # Calculate accuracy and F1 score        
+          accuracy, f1 = knn.evaluate(test_data_scaled, test_labels)
+          print(f"Test Accuracy for KNN with {method}: {accuracy:.2f}")
+          print(f"Test F1 Score for KNN with {method}: {f1:.2f}")
+           
     # Test code for VGG-16
     if args.model == "VGG":
         vgg = VGG()
@@ -170,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--sample_method', type=str, default="all")
     parser.add_argument('--model', type=str, default='VGG', choices=['VGG',])    
     #parser.add_argument('--model', type=str, default="SVC_classifier")
+    parser.add_argument('--k', type=int, default=5, help='Number of neighbors for the KNN model.')
     args = parser.parse_args()
     main(args)
 
