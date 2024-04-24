@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import torch
 from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score as f1_score_sklearn
 from torcheval.metrics.functional import multiclass_f1_score
 import argparse
 
@@ -118,17 +118,14 @@ def main(args):
         test_x_reshaped = test_dataset.reshape(test_dataset.shape[0],-1)
 
         # choose original df or a sampling method to train on
-        svc.train(train_dataset,train_labels,val_x_reshaped,val_labels)
-        #svc.train(train_x_us, train_labels_us, val_x_reshaped, val_labels) 
-        #svc.train(train_x_smote, train_labels_smote, val_x_reshaped, val_labels) # this will take a few hours
-        #svc.train(train_x_os, train_labels_os, val_x_reshaped, val_labels) # this will take a few hours
+        svc.train(train_x_us, train_labels_us, val_x_reshaped, val_labels)
         predictions = svc.predict(test_x_reshaped)
         test_accuracy = np.mean(predictions == test_labels)
-        f1 = f1_score(test_labels, predictions, average='weighted')  # Use 'micro', 'macro', or 'weighted' as per your requirement
+        f1 = f1_score_sklearn(test_labels, predictions, average='weighted')
         print(f"Test Accuracy: {test_accuracy}")
         print(f"Weighted F1 Score: {f1}")
         
-  if args.model == "KNN":
+    if args.model == "KNN":
        # Create a dictionary to hold the different sampling datasets
        sampling_methods = {
           'original': (train_dataset, train_labels),
@@ -167,6 +164,7 @@ def main(args):
     # Test code for VGG-16
     if args.model == "VGG":
         vgg = VGG()
+        test_loader = vgg._create_dataloader(test_dataset, test_labels, batch_size=32)
         sampling_methods = {
             'original': (train_dataset, train_labels),
             'OverSampling': (train_dataset_os, train_labels_os),
@@ -177,7 +175,7 @@ def main(args):
             print(f"Training VGG model with {method} enhanced data...")
             vgg.train(data, labels, val_dataset, val_labels)
             print("Predicting with VGG model...")
-            predictions = vgg.predict(test_dataset)
+            predictions = vgg.predict(test_loader)
             test_accuracy = np.mean(predictions == test_labels)
             f1_score = multiclass_f1_score(torch.tensor(test_labels), torch.tensor(predictions), num_classes=7, average="weighted")
             print(f"Test Accuracy for VGG: {test_accuracy:.2f}, F1: {f1_score}")
@@ -185,7 +183,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    parser.add_argument('--model', type=str, default='VGG', choices=['VGG',])    
+    parser.add_argument('--model', type=str, default='SVC')    
     #parser.add_argument('--model', type=str, default="SVC_classifier")
     parser.add_argument('--k', type=int, default=5, help='Number of neighbors for the KNN model.')
     args = parser.parse_args()
