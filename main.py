@@ -36,15 +36,18 @@ DIM = 48
 
 def convert_dataset(data_dir=None, split='train'):
     split_dir = os.path.join(data_dir, split)
-    dataset = [] 
-    labels  = []
+    dataset = []
+    labels = []
     for label in os.listdir(split_dir):
         label_dir = os.path.join(split_dir, label)
-        for file in os.listdir(label_dir):
-            img = Image.open(os.path.join(label_dir, file))
-            img_array = np.array(img)
-            dataset.append(img_array)
-            labels.append(LABEL_MAP[label])
+        if os.path.isdir(label_dir): 
+            for file in os.listdir(label_dir):
+                file_path = os.path.join(label_dir, file)
+                if os.path.isfile(file_path): 
+                    img = Image.open(file_path)
+                    img_array = np.array(img)
+                    dataset.append(img_array)
+                    labels.append(LABEL_MAP[label])
     return np.array(dataset), np.array(labels)
     
         
