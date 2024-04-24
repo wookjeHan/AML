@@ -81,12 +81,12 @@ class VGG:
     def predict(self, X):
         self.model.eval()
         predictions = []
-        X_tensor = torch.tensor(X, dtype=torch.float32).reshape(-1, 1, X.shape[1], X.shape[1]).to(self.device)
-        prediction_loader = DataLoader(X_tensor, batch_size=32, shuffle=False)
-        with torch.no_grad():
-            for batch in prediction_loader:
-                batch = batch.to(self.device)
-                outputs = self.model(batch)
-                predicted = torch.argmax(outputs, 1)
-                predictions.extend(predicted.cpu().numpy())
-        return predictions
+        processed_images = [self.transform(Image.fromarray(img)) for img in X]
+        X_tensor = torch.stack(processed_images).to(self.device)
+        for i in range(0, X_tensor.size(0), 32):
+            batch_tensor = X_tensor[i:i + 32]
+            outputs = self.model(batch_tensor)
+            predicted = torch.argmax(outputs, 1)
+            predictions.extend(predicted.cpu().numpy())
+        return [int(a) for a in predictions]
+
