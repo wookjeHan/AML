@@ -11,7 +11,11 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn.metrics import f1_score as f1_score_sklearn
 from torcheval.metrics.functional import multiclass_f1_score
 import argparse
+from sklearn.metrics import f1_score
 
+#from models import Resnet
+# from models import SVC_classifier
+from models import DecisionTree_classifier
 from models import Resnet, VGG
 from models import SVC_classifier
 from models import KNN_classifier
@@ -123,6 +127,59 @@ def main(args):
         test_accuracy = np.mean(predictions == test_labels)
         f1 = f1_score_sklearn(test_labels, predictions, average='weighted')
         print(f"Test Accuracy: {test_accuracy}")
+
+    if args.model == "DecisionTree_classifier":
+        # Test Code for Decision Tree
+        dtc = DecisionTree_classifier()
+        train_x_smote = train_dataset_smote.reshape(train_dataset_smote.shape[0], -1)
+        train_x_us = train_dataset_us.reshape(train_dataset_us.shape[0], -1)
+        train_x_os = train_dataset_os.reshape(train_dataset_os.shape[0], -1)
+        val_x_reshaped = val_dataset.reshape(val_dataset.shape[0], -1)
+        test_x_reshaped = test_dataset.reshape(test_dataset.shape[0],-1)
+        print(f"train dataset smote shape: {train_dataset_smote.shape}")
+        print(f"valid dataset shape: {val_dataset.shape}")
+        print(f"reshaped train dataset smote shape: {train_x_smote.shape}")
+        #print(f"reshaped train dataset undersampling shape: {train_x_us.shape}")
+        print(f"reshaped train dataset oversampling shape: {train_x_os.shape}")
+        print(f"reshaped val dataset shape: {val_x_reshaped.shape}")
+        print(f"train labels smote shape: {train_labels_smote.shape}")
+        #dtc.train(train_dataset, train_labels, val_x_reshaped, val_labels) # this will take a few hours
+        #dtc.train(train_x_us, train_labels_us, val_x_reshaped, val_labels) # this will take a few hours
+        #dtc.train(train_x_os, train_labels_os, val_x_reshaped, val_labels) # this will take a few hours
+        dtc.train(train_x_smote, train_labels_smote, val_x_reshaped, val_labels) # this will take a few hours
+             
+        predictions = dtc.predict(test_x_reshaped)
+        test_accuracy = np.mean(predictions == test_labels)
+        weighted_f1_score = f1_score(test_labels, predictions, average='weighted')
+
+
+        # Original
+        #Best Parameters: {'dt__max_depth': 10, 'dt__min_samples_split': 5}
+        #Validation Score: 0.30718863193089996
+        #Test Accuracy: 0.3021733073279465
+        #F1-score: 0.2904111206273651
+        
+    
+        # Undersampling
+        #Best Parameters: {'dt__max_depth': 20, 'dt__min_samples_split': 2}
+        #Validation Score: 0.20938980217330733
+        #Test Accuracy: 0.19657286152131512
+        #F1-score: 0.2032021835388274
+        
+        # Oversampling
+        #Best Parameters: {'dt__max_depth': 20, 'dt__min_samples_split': 2}
+        #Validation Score: 0.28085817776539423
+        #Test Accuracy: 0.29005293953747563
+        #F1-score: 0.2903162224081526
+        
+        # SMOTE
+        # Best Parameters: {'dt__max_depth': 20, 'dt__min_samples_split': 2}
+        # Validation Score: 0.28085817776539423
+        # Test Accuracy: 0.29005293953747563
+        # F1-score: 0.2903162224081526
+        
+        print(f"Test Accuracy: {test_accuracy}")
+        print(f"F1-score: {weighted_f1_score}")
         print(f"Weighted F1 Score: {f1}")
         
     if args.model == "KNN":
@@ -183,8 +240,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_method', type=str, default="all")
-    parser.add_argument('--model', type=str, default='SVC')    
-    #parser.add_argument('--model', type=str, default="SVC_classifier")
+    parser.add_argument('--model', type=str, default="DecisionTree_classifier")
     parser.add_argument('--k', type=int, default=5, help='Number of neighbors for the KNN model.')
     args = parser.parse_args()
     main(args)
