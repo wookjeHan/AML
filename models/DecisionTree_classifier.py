@@ -12,7 +12,7 @@ from sklearn.pipeline import Pipeline
 class DecisionTree_classifier:
     def __init__(self, criterion='gini', max_depth=None, min_samples_split=2):
         self.model = Pipeline([
-            ('dt', DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, min_samples_split=min_samples_split))
+            ('dt', DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, min_samples_split=min_samples_split, random_state=42))
         ])
 
     def train(self, train_x, train_y, val_x, val_y):
