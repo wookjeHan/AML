@@ -19,5 +19,4 @@ class KNN_classifier:
         
         return accuracy, f1
     
-    
 
