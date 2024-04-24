@@ -53,7 +53,6 @@ class VGG:
                 train_loss += loss.item()
 
             # Evaluating after each epoch
-
             val_f1 = self.evaluate(val_loader)
             print(f"EPOCH: {epoch}, Train Loss: {train_loss / len(train_loader):.4f}, Val F1: {val_f1:.4f}")
             if val_f1 > best_perf:
@@ -83,8 +82,11 @@ class VGG:
         self.model.eval()
         predictions = []
         X_tensor = torch.tensor(X, dtype=torch.float32).reshape(-1, 1, X.shape[1], X.shape[1]).to(self.device)
+        prediction_loader = DataLoader(X_tensor, batch_size=32, shuffle=False)
         with torch.no_grad():
-            outputs = self.model(X_tensor)
-            predicted = torch.argmax(outputs, 1)
-            predictions.extend(predicted.cpu().numpy())
+            for batch in prediction_loader:
+                batch = batch.to(self.device)
+                outputs = self.model(batch)
+                predicted = torch.argmax(outputs, 1)
+                predictions.extend(predicted.cpu().numpy())
         return predictions
